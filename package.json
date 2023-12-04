@@ -1,0 +1,11 @@
+{
+  "devDependencies": {
+    "@certusone/wormhole-sdk": "^0.10.2",
+    "@nomicfoundation/hardhat-toolbox": "^3.0.0",
+    "@openzeppelin/contracts": "^4.9.2",
+    "@prb/math": "^2.5.0",
+    "dotenv": "^16.3.1",
+    "i": "^0.3.7",
+    "npm": "^10.1.0"
+  }
+}
