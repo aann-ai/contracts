@@ -12,12 +12,12 @@ contract Multisender is IMultisender {
     }
 
     /// @inheritdoc IMultisender
-    function multisend(address[] calldata accounts_) external {
-        if (accounts_.length > 100 || accounts_.length == 0) {
+    function multisend(address[] calldata accounts_, uint256[] calldata tokenIds_) external {
+        if (accounts_.length > 100 || accounts_.length == 0 || accounts_.length != tokenIds_.length) {
             revert InvalidLength();
         }
         for (uint256 i = 0; i < accounts_.length; ) {
-            collection.safeTransferFrom(msg.sender, accounts_[i], collection.tokenOfOwnerByIndex(msg.sender, 0));
+            collection.safeTransferFrom(msg.sender, accounts_[i], tokenIds_[i]);
             unchecked {
                 ++i;
             }

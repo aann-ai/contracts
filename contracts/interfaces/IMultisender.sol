@@ -8,5 +8,6 @@ interface IMultisender {
 
     /// @notice Multisends NFTs to the specified accounts.
     /// @param accounts_ Account addresses.
-    function multisend(address[] calldata accounts_) external;
+    /// @param tokenIds_ Token ids.
+    function multisend(address[] calldata accounts_, uint256[] calldata tokenIds_) external;
 }
