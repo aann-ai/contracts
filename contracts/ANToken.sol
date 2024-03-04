@@ -131,7 +131,7 @@ contract ANToken is IANToken, IWormholeReceiver, AccessControl {
         uint256 adjustmentFactor = burnableSupply.div(burnableSupply - burnAmount);
         cumulativeAdjustmentFactor = cumulativeAdjustmentFactor.mul(adjustmentFactor);
         _totalSupply = nonBurnableSupply + burnableSupply.div(adjustmentFactor);
-        emit Transfer(address(0), address(0), currentTotalSupply - _totalSupply);
+        emit Transfer(address(this), address(0), currentTotalSupply - _totalSupply);
     }
 
     /// @inheritdoc IANToken
