@@ -339,6 +339,9 @@ contract ANToken is IANToken, IWormholeReceiver, AccessControl {
         if (_blocklistedAccounts.contains(msg.sender) || _blocklistedAccounts.contains(to_)) {
             revert Blocklisted();
         }
+        if (sourceAddresses[targetChain_] == address(0)) {
+            revert InvalidTargetChain();
+        }
         if (!isTradingEnabled) {
             if (_hasLimits(msg.sender, to_)) {
                 revert ForbiddenToTransferTokens({
@@ -387,6 +390,9 @@ contract ANToken is IANToken, IWormholeReceiver, AccessControl {
         }
         if (_blocklistedAccounts.contains(from_) || _blocklistedAccounts.contains(to_)) {
             revert Blocklisted();
+        }
+        if (sourceAddresses[targetChain_] == address(0)) {
+            revert InvalidTargetChain();
         }
         if (!isTradingEnabled) {
             if (_hasLimits(from_, to_)) {

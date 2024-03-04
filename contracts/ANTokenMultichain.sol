@@ -259,6 +259,9 @@ contract ANTokenMultichain is IANTokenMultichain, IWormholeReceiver, AccessContr
         if (_blocklistedAccounts.contains(msg.sender) || _blocklistedAccounts.contains(to_)) {
             revert Blocklisted();
         }
+        if (sourceAddresses[targetChain_] == address(0)) {
+            revert InvalidTargetChain();
+        }
         _burn(msg.sender, amount_);
         wormholeRelayer.sendPayloadToEvm{value: cost}(
             targetChain_,
@@ -298,6 +301,9 @@ contract ANTokenMultichain is IANTokenMultichain, IWormholeReceiver, AccessContr
         }
         if (_blocklistedAccounts.contains(from_) || _blocklistedAccounts.contains(to_)) {
             revert Blocklisted();
+        }
+        if (sourceAddresses[targetChain_] == address(0)) {
+            revert InvalidTargetChain();
         }
         _allowances[from_][msg.sender] -= amount_;
         _burn(from_, amount_);

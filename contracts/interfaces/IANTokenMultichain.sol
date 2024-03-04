@@ -17,6 +17,7 @@ interface IANTokenMultichain is IERC20Metadata {
     error InvalidCommissionRecipient();
     error MaximumPercentageOfSalesCommissionExceeded();
     error InvalidMsgValue();
+    error InvalidTargetChain();
     error InvalidCallee();
     error NotUniqueHash();
     error InvalidSourceAddress();
