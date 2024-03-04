@@ -15,8 +15,6 @@ interface IANToken is IERC20Metadata {
     error MaximumBurnPercentageExceeded();
     error AlreadyInLiquidityPoolsSet(address account);
     error NotFoundInLiquidityPoolsSet(address account);
-    error AlreadyInWhitelistedAccountsSet(address account);
-    error NotFoundInWhitelistedAccountsSet(address account);
     error AlreadyInBlocklistedAccountsSet(address account);
     error NotFoundInBlocklistedAccountsSet(address account);
     error AlreadyInCommissionExemptAccountsSet(address account);
@@ -43,8 +41,6 @@ interface IANToken is IERC20Metadata {
     event BlocklistedAccountNullified(address indexed account, uint256 indexed amount);
     event LiquidityPoolsAdded(address[] indexed liquidityPools);
     event LiquidityPoolsRemoved(address[] indexed liquidityPools);
-    event WhitelistedAccountsAdded(address[] indexed accounts);
-    event WhitelistedAccountsRemoved(address[] indexed accounts);
     event BlocklistedAccountsAdded(address[] indexed accounts);
     event BlocklistedAccountsRemoved(address[] indexed accounts);
     event CommissionExemptAccountsAdded(address[] indexed accounts);
@@ -126,16 +122,6 @@ interface IANToken is IERC20Metadata {
     /// @param accounts_ Account addresses.
     function removeLiquidityPools(address[] calldata accounts_) external;
 
-    /// @notice Adds `accounts_` to the whitelisted accounts set.
-    /// @dev Could be called only by the DEFAULT_ADMIN_ROLE.
-    /// @param accounts_ Account addresses.
-    function addWhitelistedAccounts(address[] calldata accounts_) external;
-
-    /// @notice Removes `accounts_` from the whitelisted accounts set.
-    /// @dev Could be called only by the DEFAULT_ADMIN_ROLE.
-    /// @param accounts_ Account addresses.
-    function removeWhitelistedAccounts(address[] calldata accounts_) external;
-
     /// @notice Adds `accounts_` to the blocklisted accounts set.
     /// @dev Could be called only by the DEFAULT_ADMIN_ROLE.
     /// @param accounts_ Account addresses.
@@ -209,11 +195,6 @@ interface IANToken is IERC20Metadata {
     /// @param account_ Account address.
     /// @return Boolean value indicating whether the `account_` is in the liquidity pools set.
     function isLiquidityPool(address account_) external view returns (bool);
-
-    /// @notice Checks if `account_` is in the whitelisted accounts set.
-    /// @param account_ Account address.
-    /// @return Boolean value indicating whether `account_` is in the whitelisted accounts set.
-    function isWhitelistedAccount(address account_) external view returns (bool);
 
     /// @notice Checks if `account_` is in the blocklisted accounts set.
     /// @param account_ Account address.

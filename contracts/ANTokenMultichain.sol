@@ -43,7 +43,7 @@ contract ANTokenMultichain is IANTokenMultichain, IWormholeReceiver, AccessContr
     constructor(IWormholeRelayer wormholeRelayer_, address commissionRecipient_) {
         wormholeRelayer = wormholeRelayer_;
         commissionRecipient = commissionRecipient_;
-        _name = "AN on Base";
+        _name = "AN on ETH";
         _symbol = "AN";
         _commissionExemptAccounts.add(commissionRecipient_);
         _burnProtectedAccounts.add(commissionRecipient_);
@@ -96,7 +96,7 @@ contract ANTokenMultichain is IANTokenMultichain, IWormholeReceiver, AccessContr
                 revert AlreadyInLiquidityPoolsSet({account: accounts_[i]});
             }
             unchecked {
-                i++;
+                ++i;
             }
         }
         emit LiquidityPoolsAdded(accounts_);
@@ -109,7 +109,7 @@ contract ANTokenMultichain is IANTokenMultichain, IWormholeReceiver, AccessContr
                 revert NotFoundInLiquidityPoolsSet({account: accounts_[i]});
             }
             unchecked {
-                i++;
+                ++i;
             }
         }
         emit LiquidityPoolsRemoved(accounts_);
@@ -122,7 +122,7 @@ contract ANTokenMultichain is IANTokenMultichain, IWormholeReceiver, AccessContr
                 revert AlreadyInBlocklistedAccountsSet({account: accounts_[i]});
             }
             unchecked {
-                i++;
+                ++i;
             }
         }
         emit BlocklistedAccountsAdded(accounts_);
@@ -135,7 +135,7 @@ contract ANTokenMultichain is IANTokenMultichain, IWormholeReceiver, AccessContr
                 revert NotFoundInBlocklistedAccountsSet({account: accounts_[i]});
             }
             unchecked {
-                i++;
+                ++i;
             }
         }
         emit BlocklistedAccountsRemoved(accounts_);
@@ -148,7 +148,7 @@ contract ANTokenMultichain is IANTokenMultichain, IWormholeReceiver, AccessContr
                 revert AlreadyInCommissionExemptAccountsSet({account: accounts_[i]});
             }
             unchecked {
-                i++;
+                ++i;
             }
         }
         emit CommissionExemptAccountsAdded(accounts_);
@@ -161,7 +161,7 @@ contract ANTokenMultichain is IANTokenMultichain, IWormholeReceiver, AccessContr
                 revert NotFoundInCommissionExemptAccountsSet({account: accounts_[i]});
             }
             unchecked {
-                i++;
+                ++i;
             }
         }
         emit CommissionExemptAccountsRemoved(accounts_);
@@ -181,7 +181,7 @@ contract ANTokenMultichain is IANTokenMultichain, IWormholeReceiver, AccessContr
         for (uint256 i = 0; i < sourceAddresses_.length; ) {
             sourceAddresses[chainIds_[i]] = sourceAddresses_[i];
             unchecked {
-                i++;
+                ++i;
             }
         }
         emit SourceAddressesUpdated(chainIds_, sourceAddresses_);
@@ -332,8 +332,8 @@ contract ANTokenMultichain is IANTokenMultichain, IWormholeReceiver, AccessContr
             revert InvalidSourceAddress();
         }
         (address from, address to, uint256 amount) = abi.decode(payload_, (address, address, uint256));
-        _mint(to, amount);
         notUniqueHash[deliveryHash_] = true;
+        _mint(to, amount);
         emit TokensReceived(from, to, amount, sourceChain_);
     }
 
@@ -499,7 +499,7 @@ contract ANTokenMultichain is IANTokenMultichain, IWormholeReceiver, AccessContr
         for (uint256 i = 0; i < length; ) {
             unchecked {
                 supply_ += _balances[_burnProtectedAccounts.at(i)];
-                i++;
+                ++i;
             }
         }
     }

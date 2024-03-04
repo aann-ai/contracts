@@ -24,9 +24,9 @@ contract ANToken is IANToken, IWormholeReceiver, AccessControl {
     IWormholeRelayer public immutable wormholeRelayer;
     address public commissionRecipient;
     uint256 public gasLimit = MAXIMUM_GAS_LIMIT;
-    uint256 public purchaseProtectionPeriod = 1 minutes;
+    uint256 public purchaseProtectionPeriod = 3 minutes;
     uint256 public saleProtectionPeriod = 60 minutes;
-    uint256 public maximumPurchaseAmountDuringProtectionPeriod = 15_000_000 ether;
+    uint256 public maximumPurchaseAmountDuringProtectionPeriod = 500_000 ether;
     uint256 public percentageOfSalesCommission = 150;
     uint256 public cumulativeAdjustmentFactor = PRBMathUD60x18.fromUint(1);
     uint256 public tradingEnabledTimestamp;
@@ -36,7 +36,6 @@ contract ANToken is IANToken, IWormholeReceiver, AccessControl {
     bool public isTradingEnabled;
 
     EnumerableSet.AddressSet private _liquidityPools;
-    EnumerableSet.AddressSet private _whitelistedAccounts;
     EnumerableSet.AddressSet private _blocklistedAccounts;
     EnumerableSet.AddressSet private _commissionExemptAccounts;
     EnumerableSet.AddressSet private _burnProtectedAccounts;
@@ -54,7 +53,7 @@ contract ANToken is IANToken, IWormholeReceiver, AccessControl {
     constructor(IWormholeRelayer wormholeRelayer_, address commissionRecipient_, address liquidityProvider_) {
         wormholeRelayer = wormholeRelayer_;
         commissionRecipient = commissionRecipient_;
-        _name = "AN on Arbitrum";
+        _name = "AN on BSC";
         _symbol = "AN";
         _commissionExemptAccounts.add(commissionRecipient_);
         _burnProtectedAccounts.add(commissionRecipient_);
@@ -70,9 +69,6 @@ contract ANToken is IANToken, IWormholeReceiver, AccessControl {
         }
         if (_liquidityPools.length() == 0) {
             revert EmptySetOfLiquidityPools();
-        }
-        if (_whitelistedAccounts.length() == 0) {
-            revert EmptySetOfWhitelistedAccounts();
         }
         if (isTradingEnabled) {
             revert TradingAlreadyEnabled();
@@ -148,7 +144,7 @@ contract ANToken is IANToken, IWormholeReceiver, AccessControl {
                 revert AlreadyInLiquidityPoolsSet({account: accounts_[i]});
             }
             unchecked {
-                i++;
+                ++i;
             }
         }
         emit LiquidityPoolsAdded(accounts_);
@@ -161,36 +157,10 @@ contract ANToken is IANToken, IWormholeReceiver, AccessControl {
                 revert NotFoundInLiquidityPoolsSet({account: accounts_[i]});
             }
             unchecked {
-                i++;
+                ++i;
             }
         }
         emit LiquidityPoolsRemoved(accounts_);
-    }
-
-    /// @inheritdoc IANToken
-    function addWhitelistedAccounts(address[] calldata accounts_) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        for (uint256 i = 0; i < accounts_.length; ) {
-            if (!_whitelistedAccounts.add(accounts_[i])) {
-                revert AlreadyInWhitelistedAccountsSet({account: accounts_[i]});
-            }
-            unchecked {
-                i++;
-            }
-        }
-        emit WhitelistedAccountsAdded(accounts_);
-    }
-
-    /// @inheritdoc IANToken
-    function removeWhitelistedAccounts(address[] calldata accounts_) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        for (uint256 i = 0; i < accounts_.length; ) {
-            if (!_whitelistedAccounts.remove(accounts_[i])) {
-                revert NotFoundInWhitelistedAccountsSet({account: accounts_[i]});
-            }
-            unchecked {
-                i++;
-            }
-        }
-        emit WhitelistedAccountsRemoved(accounts_);
     }
 
     /// @inheritdoc IANToken
@@ -200,7 +170,7 @@ contract ANToken is IANToken, IWormholeReceiver, AccessControl {
                 revert AlreadyInBlocklistedAccountsSet({account: accounts_[i]});
             }
             unchecked {
-                i++;
+                ++i;
             }
         }
         emit BlocklistedAccountsAdded(accounts_);
@@ -213,7 +183,7 @@ contract ANToken is IANToken, IWormholeReceiver, AccessControl {
                 revert NotFoundInBlocklistedAccountsSet({account: accounts_[i]});
             }
             unchecked {
-                i++;
+                ++i;
             }
         }
         emit BlocklistedAccountsRemoved(accounts_);
@@ -226,7 +196,7 @@ contract ANToken is IANToken, IWormholeReceiver, AccessControl {
                 revert AlreadyInCommissionExemptAccountsSet({account: accounts_[i]});
             }
             unchecked {
-                i++;
+                ++i;
             }
         }
         emit CommissionExemptAccountsAdded(accounts_);
@@ -239,7 +209,7 @@ contract ANToken is IANToken, IWormholeReceiver, AccessControl {
                 revert NotFoundInCommissionExemptAccountsSet({account: accounts_[i]});
             }
             unchecked {
-                i++;
+                ++i;
             }
         }
         emit CommissionExemptAccountsRemoved(accounts_);
@@ -259,7 +229,7 @@ contract ANToken is IANToken, IWormholeReceiver, AccessControl {
         for (uint256 i = 0; i < sourceAddresses_.length; ) {
             sourceAddresses[chainIds_[i]] = sourceAddresses_[i];
             unchecked {
-                i++;
+                ++i;
             }
         }
         emit SourceAddressesUpdated(chainIds_, sourceAddresses_);
@@ -460,8 +430,8 @@ contract ANToken is IANToken, IWormholeReceiver, AccessControl {
             revert InvalidSourceAddress();
         }
         (address from, address to, uint256 amount) = abi.decode(payload_, (address, address, uint256));
-        _mint(to, amount);
         notUniqueHash[deliveryHash_] = true;
+        _mint(to, amount);
         emit TokensReceived(from, to, amount, sourceChain_);
     }
 
@@ -488,11 +458,6 @@ contract ANToken is IANToken, IWormholeReceiver, AccessControl {
     /// @inheritdoc IANToken
     function isLiquidityPool(address account_) external view returns (bool) {
         return _liquidityPools.contains(account_);
-    }
-
-    /// @inheritdoc IANToken
-    function isWhitelistedAccount(address account_) external view returns (bool) {
-        return _whitelistedAccounts.contains(account_);
     }
 
     /// @inheritdoc IANToken
@@ -569,20 +534,12 @@ contract ANToken is IANToken, IWormholeReceiver, AccessControl {
         } else {
             uint256 timeElapsed = block.timestamp - tradingEnabledTimestamp;
             if (timeElapsed < purchaseProtectionPeriod && _liquidityPools.contains(from_)) {
-                if (_whitelistedAccounts.contains(tx.origin)) {
-                    if (!isPurchaseMadeDuringProtectionPeriodByAccount[tx.origin]) {
-                        availableAmountToPurchaseDuringProtectionPeriodByAccount[tx.origin] 
-                            = maximumPurchaseAmountDuringProtectionPeriod - amount_;
-                        isPurchaseMadeDuringProtectionPeriodByAccount[tx.origin] = true;
-                    } else {
-                        availableAmountToPurchaseDuringProtectionPeriodByAccount[tx.origin] -= amount_;
-                    }
+                if (!isPurchaseMadeDuringProtectionPeriodByAccount[tx.origin]) {
+                    availableAmountToPurchaseDuringProtectionPeriodByAccount[tx.origin] 
+                        = maximumPurchaseAmountDuringProtectionPeriod - amount_;
+                    isPurchaseMadeDuringProtectionPeriodByAccount[tx.origin] = true;
                 } else {
-                    revert ForbiddenToTransferTokens({
-                        from: from_,
-                        to: to_,
-                        amount: amount_
-                    });
+                    availableAmountToPurchaseDuringProtectionPeriodByAccount[tx.origin] -= amount_;
                 }
             }
             if (timeElapsed < saleProtectionPeriod && _liquidityPools.contains(to_)) {
@@ -663,7 +620,7 @@ contract ANToken is IANToken, IWormholeReceiver, AccessControl {
     /// @return Boolean value indicating whether tokens can be sent.
     function _hasLimits(address from_, address to_) private view returns (bool) {
         return
-            !hasRole(LIQUIDITY_PROVIDER_ROLE, from_) &&
+            !hasRole(LIQUIDITY_PROVIDER_ROLE, from_) ||
             !hasRole(LIQUIDITY_PROVIDER_ROLE, to_);
     }
 
@@ -674,7 +631,7 @@ contract ANToken is IANToken, IWormholeReceiver, AccessControl {
         for (uint256 i = 0; i < length; ) {
             unchecked {
                 supply_ += _balances[_burnProtectedAccounts.at(i)];
-                i++;
+                ++i;
             }
         }
     }
