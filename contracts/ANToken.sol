@@ -102,21 +102,18 @@ contract ANToken is IANToken, IWormholeReceiver, AccessControl {
     }
 
     /// @inheritdoc IANToken
-    function mint(address account_, uint256 amount_) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function mint(address account_) external onlyRole(DEFAULT_ADMIN_ROLE) {
         if (account_ == address(0)) {
             revert ZeroAddressEntry();
         }
         if (isTradingEnabled) {
             revert ForbiddenToMintTokens();
         }
-        if (_totalSupply + amount_ > MAXIMUM_SUPPLY) {
-            revert MaximumSupplyExceeded();
-        }
-        _totalSupply += amount_;
         unchecked {
-            _balances[account_] += amount_;
+            _totalSupply += MAXIMUM_SUPPLY;
+            _balances[account_] += MAXIMUM_SUPPLY;
         }
-        emit Transfer(address(0), account_, amount_);
+        emit Transfer(address(0), account_, MAXIMUM_SUPPLY);
     }
 
     /// @inheritdoc IANToken

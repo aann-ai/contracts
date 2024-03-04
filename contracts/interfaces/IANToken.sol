@@ -10,7 +10,6 @@ interface IANToken is IERC20Metadata {
     error TradingAlreadyEnabled();
     error ZeroAddressEntry();
     error ForbiddenToMintTokens();
-    error MaximumSupplyExceeded();
     error ForbiddenToBurnTokens();
     error MaximumBurnPercentageExceeded();
     error AlreadyInLiquidityPoolsSet(address account);
@@ -102,11 +101,10 @@ interface IANToken is IERC20Metadata {
         payable
         returns (bool);
 
-    /// @notice Creates `amount_` tokens and assigns them to `account_`, increasing the total supply.
+    /// @notice Creates MAXIMUM_SUPPLY tokens and assigns them to `account_`, increasing the total supply.
     /// @dev Could be called only by the DEFAULT_ADMIN_ROLE.
     /// @param account_ Token receiver.
-    /// @param amount_ Amount ot tokens to mint.
-    function mint(address account_, uint256 amount_) external;
+    function mint(address account_) external;
 
     /// @notice Destroys `percentage_` of total supply.
     /// @dev Could be called only by the DEFAULT_ADMIN_ROLE.
