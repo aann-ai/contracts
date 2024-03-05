@@ -14,8 +14,6 @@ interface IANToken is IERC20Metadata {
     error MaximumBurnPercentageExceeded();
     error AlreadyInLiquidityPoolsSet(address account);
     error NotFoundInLiquidityPoolsSet(address account);
-    error AlreadyInBlocklistedAccountsSet(address account);
-    error NotFoundInBlocklistedAccountsSet(address account);
     error AlreadyInCommissionExemptAccountsSet(address account);
     error NotFoundInCommissionExemptAccountsSet(address account);
     error InvalidArrayLengths();
@@ -32,17 +30,13 @@ interface IANToken is IERC20Metadata {
     error InvalidSourceAddress();
     error AlreadyInBurnProtectedAccountsSet();
     error NotFoundInBurnProtectedAccountsSet();
-    error Blocklisted();
     error ForbiddenToTransferTokens(address from, address to, uint256 amount);
     error ForbiddenToSaleTokens();
 
     event TradingEnabled(uint256 indexed tradingEnabledTimestamp);
     event AccumulatedCommissionWithdrawn(uint256 indexed commissionAmount);
-    event BlocklistedAccountNullified(address indexed account, uint256 indexed amount);
     event LiquidityPoolsAdded(address[] indexed liquidityPools);
     event LiquidityPoolsRemoved(address[] indexed liquidityPools);
-    event BlocklistedAccountsAdded(address[] indexed accounts);
-    event BlocklistedAccountsRemoved(address[] indexed accounts);
     event CommissionExemptAccountsAdded(address[] indexed accounts);
     event CommissionExemptAccountsRemoved(address[] indexed accounts);
     event SourceAddressesUpdated(uint16[] chainIds, address[] sourceAddresses);
@@ -63,11 +57,6 @@ interface IANToken is IERC20Metadata {
     /// @notice Transfers the accumulated commission on the contract to the commission recipient.
     /// @dev Could be called only by the DEFAULT_ADMIN_ROLE.
     function withdrawAccumulatedCommission() external;
-
-    /// @notice Nullifies the blocklisted account.
-    /// @dev Could be called only by the DEFAULT_ADMIN_ROLE.
-    /// @param account_ Account address.
-    function nullifyBlocklistedAccount(address account_) external;
 
     /// @notice Transfers tokens via wormhole relayer.
     /// @param targetChain_ Wormhole representation of target chain id.
@@ -120,16 +109,6 @@ interface IANToken is IERC20Metadata {
     /// @dev Could be called only by the DEFAULT_ADMIN_ROLE.
     /// @param accounts_ Account addresses.
     function removeLiquidityPools(address[] calldata accounts_) external;
-
-    /// @notice Adds `accounts_` to the blocklisted accounts set.
-    /// @dev Could be called only by the DEFAULT_ADMIN_ROLE.
-    /// @param accounts_ Account addresses.
-    function addBlocklistedAccounts(address[] calldata accounts_) external;
-
-    /// @notice Removes `accounts_` from the blocklisted accounts set.
-    /// @dev Could be called only by the DEFAULT_ADMIN_ROLE.
-    /// @param accounts_ Account addresses.
-    function removeBlocklistedAccounts(address[] calldata accounts_) external;
 
     /// @notice Adds `accounts_` to the commission exempt accounts set.
     /// @dev Could be called only by the DEFAULT_ADMIN_ROLE.
@@ -194,11 +173,6 @@ interface IANToken is IERC20Metadata {
     /// @param account_ Account address.
     /// @return Boolean value indicating whether the `account_` is in the liquidity pools set.
     function isLiquidityPool(address account_) external view returns (bool);
-
-    /// @notice Checks if `account_` is in the blocklisted accounts set.
-    /// @param account_ Account address.
-    /// @return Boolean value indicating whether `account_` is in the blocklisted accounts set.
-    function isBlocklistedAccount(address account_) external view returns (bool);
 
     /// @notice Checks if `account_` is in the commission exempt accounts set.
     /// @param account_ Account address.

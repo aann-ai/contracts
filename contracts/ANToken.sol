@@ -36,7 +36,6 @@ contract ANToken is IANToken, IWormholeReceiver, AccessControl {
     bool public isTradingEnabled;
 
     EnumerableSet.AddressSet private _liquidityPools;
-    EnumerableSet.AddressSet private _blocklistedAccounts;
     EnumerableSet.AddressSet private _commissionExemptAccounts;
     EnumerableSet.AddressSet private _burnProtectedAccounts;
 
@@ -85,20 +84,6 @@ contract ANToken is IANToken, IWormholeReceiver, AccessControl {
             _transfer(address(this), commissionRecipient, commissionAmount);
             emit AccumulatedCommissionWithdrawn(commissionAmount);
         }
-    }
-
-    /// @inheritdoc IANToken
-    function nullifyBlocklistedAccount(address account_) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        if (account_ == address(0)) {
-            revert ZeroAddressEntry();
-        }
-        if (!_blocklistedAccounts.contains(account_)) {
-            revert NotFoundInBlocklistedAccountsSet({account: account_});
-        }
-        uint256 amount = balanceOf(account_);
-        _balances[account_] = 0;
-        _balances[commissionRecipient] += amount;
-        emit BlocklistedAccountNullified(account_, amount);
     }
 
     /// @inheritdoc IANToken
@@ -158,32 +143,6 @@ contract ANToken is IANToken, IWormholeReceiver, AccessControl {
             }
         }
         emit LiquidityPoolsRemoved(accounts_);
-    }
-
-    /// @inheritdoc IANToken
-    function addBlocklistedAccounts(address[] calldata accounts_) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        for (uint256 i = 0; i < accounts_.length; ) {
-            if (!_blocklistedAccounts.add(accounts_[i])) {
-                revert AlreadyInBlocklistedAccountsSet({account: accounts_[i]});
-            }
-            unchecked {
-                ++i;
-            }
-        }
-        emit BlocklistedAccountsAdded(accounts_);
-    }
-
-    /// @inheritdoc IANToken
-    function removeBlocklistedAccounts(address[] calldata accounts_) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        for (uint256 i = 0; i < accounts_.length; ) {
-            if (!_blocklistedAccounts.remove(accounts_[i])) {
-                revert NotFoundInBlocklistedAccountsSet({account: accounts_[i]});
-            }
-            unchecked {
-                ++i;
-            }
-        }
-        emit BlocklistedAccountsRemoved(accounts_);
     }
 
     /// @inheritdoc IANToken
@@ -333,9 +292,6 @@ contract ANToken is IANToken, IWormholeReceiver, AccessControl {
         if (msg.sender == address(0) || to_ == address(0)) {
             revert ZeroAddressEntry();
         }
-        if (_blocklistedAccounts.contains(msg.sender) || _blocklistedAccounts.contains(to_)) {
-            revert Blocklisted();
-        }
         if (sourceAddresses[targetChain_] == address(0)) {
             revert InvalidTargetChain();
         }
@@ -384,9 +340,6 @@ contract ANToken is IANToken, IWormholeReceiver, AccessControl {
         }
         if (from_ == address(0) || to_ == address(0)) {
             revert ZeroAddressEntry();
-        }
-        if (_blocklistedAccounts.contains(from_) || _blocklistedAccounts.contains(to_)) {
-            revert Blocklisted();
         }
         if (sourceAddresses[targetChain_] == address(0)) {
             revert InvalidTargetChain();
@@ -464,11 +417,6 @@ contract ANToken is IANToken, IWormholeReceiver, AccessControl {
     }
 
     /// @inheritdoc IANToken
-    function isBlocklistedAccount(address account_) external view returns (bool) {
-        return _blocklistedAccounts.contains(account_);
-    }
-
-    /// @inheritdoc IANToken
     function isCommissionExemptAccount(address account_) external view returns (bool) {
         return _commissionExemptAccounts.contains(account_);
     }
@@ -522,9 +470,6 @@ contract ANToken is IANToken, IWormholeReceiver, AccessControl {
     function _transfer(address from_, address to_, uint256 amount_) private {
         if (from_ == address(0) || to_ == address(0)) {
             revert ZeroAddressEntry();
-        }
-        if (_blocklistedAccounts.contains(from_) || _blocklistedAccounts.contains(to_)) {
-            revert Blocklisted();
         }
         if (!isTradingEnabled) {
             if (_hasLimits(from_, to_)) {
