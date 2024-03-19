@@ -23,7 +23,7 @@ contract ANToken is IANToken, IWormholeReceiver, AccessControl {
 
     IWormholeRelayer public immutable wormholeRelayer;
     address public commissionRecipient;
-    uint256 public gasLimit = MAXIMUM_GAS_LIMIT;
+    uint256 public gasLimit = MINIMUM_GAS_LIMIT;
     uint256 public purchaseProtectionPeriod = 3 minutes;
     uint256 public saleProtectionPeriod = 60 minutes;
     uint256 public maximumPurchaseAmountDuringProtectionPeriod = 500_000 ether;
@@ -63,9 +63,6 @@ contract ANToken is IANToken, IWormholeReceiver, AccessControl {
 
     /// @inheritdoc IANToken
     function enableTrading() external onlyRole(DEFAULT_ADMIN_ROLE) {
-        if (_totalSupply != MAXIMUM_SUPPLY) {
-            revert MaximumSupplyNotMinted();
-        }
         if (_liquidityPools.length() == 0) {
             revert EmptySetOfLiquidityPools();
         }
@@ -292,8 +289,9 @@ contract ANToken is IANToken, IWormholeReceiver, AccessControl {
         if (msg.sender == address(0) || to_ == address(0)) {
             revert ZeroAddressEntry();
         }
-        if (sourceAddresses[targetChain_] == address(0)) {
-            revert InvalidTargetChain();
+        address target = sourceAddresses[targetChain_];
+        if (target == address(0) || target != targetAddress_) {
+            revert InvalidTargetAddress();
         }
         if (!isTradingEnabled) {
             if (_hasLimits(msg.sender, to_)) {
@@ -341,8 +339,9 @@ contract ANToken is IANToken, IWormholeReceiver, AccessControl {
         if (from_ == address(0) || to_ == address(0)) {
             revert ZeroAddressEntry();
         }
-        if (sourceAddresses[targetChain_] == address(0)) {
-            revert InvalidTargetChain();
+        address target = sourceAddresses[targetChain_];
+        if (target == address(0) || target != targetAddress_) {
+            revert InvalidTargetAddress();
         }
         if (!isTradingEnabled) {
             if (_hasLimits(from_, to_)) {
@@ -564,12 +563,9 @@ contract ANToken is IANToken, IWormholeReceiver, AccessControl {
     /// @notice Determines whether tokens can be sent between sender 
     /// and receiver when trading is not enabled.
     /// @param from_ Token sender.
-    /// @param to_ Token receiver.
     /// @return Boolean value indicating whether tokens can be sent.
-    function _hasLimits(address from_, address to_) private view returns (bool) {
-        return
-            !hasRole(LIQUIDITY_PROVIDER_ROLE, from_) ||
-            !hasRole(LIQUIDITY_PROVIDER_ROLE, to_);
+    function _hasLimits(address from_, address) private view returns (bool) {
+        return !hasRole(LIQUIDITY_PROVIDER_ROLE, from_);
     }
 
     /// @notice Retrieves the total supply of burn-protected accounts.

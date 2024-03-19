@@ -21,7 +21,7 @@ contract ANTokenMultichain is IANTokenMultichain, IWormholeReceiver, AccessContr
 
     IWormholeRelayer public immutable wormholeRelayer;
     address public commissionRecipient;
-    uint256 public gasLimit = MAXIMUM_GAS_LIMIT;
+    uint256 public gasLimit = MINIMUM_GAS_LIMIT;
     uint256 public percentageOfSalesCommission = 150;
     uint256 public cumulativeAdjustmentFactor = PRBMathUD60x18.fromUint(1);
     uint256 private _totalSupply;
@@ -215,8 +215,9 @@ contract ANTokenMultichain is IANTokenMultichain, IWormholeReceiver, AccessContr
         if (msg.sender == address(0) || to_ == address(0)) {
             revert ZeroAddressEntry();
         }
-        if (sourceAddresses[targetChain_] == address(0)) {
-            revert InvalidTargetChain();
+        address target = sourceAddresses[targetChain_];
+        if (target == address(0) || target != targetAddress_) {
+            revert InvalidTargetAddress();
         }
         _burn(msg.sender, amount_);
         wormholeRelayer.sendPayloadToEvm{value: cost}(
@@ -255,8 +256,9 @@ contract ANTokenMultichain is IANTokenMultichain, IWormholeReceiver, AccessContr
         if (from_ == address(0) || to_ == address(0)) {
             revert ZeroAddressEntry();
         }
-        if (sourceAddresses[targetChain_] == address(0)) {
-            revert InvalidTargetChain();
+        address target = sourceAddresses[targetChain_];
+        if (target == address(0) || target != targetAddress_) {
+            revert InvalidTargetAddress();
         }
         _allowances[from_][msg.sender] -= amount_;
         _burn(from_, amount_);

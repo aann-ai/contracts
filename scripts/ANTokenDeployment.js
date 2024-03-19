@@ -1,9 +1,9 @@
 const { ethers } = require('hardhat');
 
 async function main () {
-    const relayer = "0x27428DD2d3DD32A4D7f7C497eAaa23130d894911";
-    const commissionRecipient = "0xc42c98D43facfB74Fb1E818B8A7571b1f584D2cc";
-    const liquidityProvider = "0x9494FfCF3dBeD4a67FCACD3419fb987f4cc0EAaC";
+    const relayer = "0x80aC94316391752A193C1c47E27D382b507c93F3";
+    const commissionRecipient = "0x437C143d2033199AB974d78a5412cE047758fF11";
+    const liquidityProvider = "0x437C143d2033199AB974d78a5412cE047758fF11";
     const ANToken = await ethers.getContractFactory("ANToken");
     const anToken = await ANToken.deploy(relayer, commissionRecipient, liquidityProvider);
     await anToken.waitForDeployment();

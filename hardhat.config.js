@@ -32,6 +32,10 @@ module.exports = {
             url: "https://rpc.ankr.com/polygon",
             accounts: [PRIVATE_KEY]
         },
+        mumbai: {
+            url: "https://rpc.ankr.com/polygon_mumbai",
+            accounts: [PRIVATE_KEY]
+        },
         base: {
             url: "https://rpc.ankr.com/base",
             accounts: [PRIVATE_KEY]

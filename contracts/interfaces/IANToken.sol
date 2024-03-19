@@ -24,7 +24,7 @@ interface IANToken is IERC20Metadata {
     error ForbiddenToUpdateMaximumPurchaseAmountDuringProtectionPeriod();
     error MaximumPercentageOfSalesCommissionExceeded();
     error InvalidMsgValue();
-    error InvalidTargetChain();
+    error InvalidTargetAddress();
     error InvalidCallee();
     error NotUniqueHash();
     error InvalidSourceAddress();
