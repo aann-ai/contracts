@@ -8,6 +8,7 @@ interface IANToken is IERC20Metadata {
     error EmptySetOfLiquidityPools();
     error EmptySetOfWhitelistedAccounts();
     error TradingAlreadyEnabled();
+    error ForbiddenToEnableTrading();
     error ZeroAddressEntry();
     error ForbiddenToMintTokens();
     error ForbiddenToBurnTokens();

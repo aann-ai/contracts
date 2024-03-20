@@ -34,6 +34,7 @@ contract ANToken is IANToken, IWormholeReceiver, AccessControl {
     string private _name;
     string private _symbol;
     bool public isTradingEnabled;
+    bool public isMinted;
 
     EnumerableSet.AddressSet private _liquidityPools;
     EnumerableSet.AddressSet private _commissionExemptAccounts;
@@ -69,6 +70,9 @@ contract ANToken is IANToken, IWormholeReceiver, AccessControl {
         if (isTradingEnabled) {
             revert TradingAlreadyEnabled();
         }
+        if (!isMinted) {
+            revert ForbiddenToEnableTrading();
+        }
         isTradingEnabled = true;
         tradingEnabledTimestamp = block.timestamp;
         emit TradingEnabled(block.timestamp);
@@ -88,13 +92,14 @@ contract ANToken is IANToken, IWormholeReceiver, AccessControl {
         if (account_ == address(0)) {
             revert ZeroAddressEntry();
         }
-        if (isTradingEnabled) {
+        if (isMinted) {
             revert ForbiddenToMintTokens();
         }
         unchecked {
             _totalSupply += MAXIMUM_SUPPLY;
             _balances[account_] += MAXIMUM_SUPPLY;
         }
+        isMinted = true;
         emit Transfer(address(0), account_, MAXIMUM_SUPPLY);
     }
 
