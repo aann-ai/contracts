@@ -23,7 +23,7 @@ contract ANToken is IANToken, IWormholeReceiver, AccessControl {
 
     IWormholeRelayer public immutable wormholeRelayer;
     address public commissionRecipient;
-    uint256 public gasLimit = MINIMUM_GAS_LIMIT;
+    uint256 public gasLimit = 150_000;
     uint256 public purchaseProtectionPeriod = 3 minutes;
     uint256 public saleProtectionPeriod = 60 minutes;
     uint256 public maximumPurchaseAmountDuringProtectionPeriod = 500_000 ether;

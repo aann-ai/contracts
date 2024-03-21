@@ -21,7 +21,7 @@ contract ANTokenMultichain is IANTokenMultichain, IWormholeReceiver, AccessContr
 
     IWormholeRelayer public immutable wormholeRelayer;
     address public commissionRecipient;
-    uint256 public gasLimit = MINIMUM_GAS_LIMIT;
+    uint256 public gasLimit = 150_000;
     uint256 public percentageOfSalesCommission = 150;
     uint256 public cumulativeAdjustmentFactor = PRBMathUD60x18.fromUint(1);
     uint256 private _totalSupply;
