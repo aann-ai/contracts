@@ -527,7 +527,7 @@ contract ANToken is IANToken, IWormholeReceiver, AccessControl {
     /// @param amount_ Amount of tokens to mint.
     function _mint(address account_, uint256 amount_) private {
         _totalSupply += amount_;
-        uint256 adjustedAmount = amount_.div(cumulativeAdjustmentFactor);
+        uint256 adjustedAmount = amount_.mul(cumulativeAdjustmentFactor);
         if (_burnProtectedAccounts.contains(account_)) {
             _balances[account_] += amount_;
         } else {
@@ -541,7 +541,7 @@ contract ANToken is IANToken, IWormholeReceiver, AccessControl {
     /// @param amount_ Amount of tokens to burn.
     function _burn(address account_, uint256 amount_) private {
         _totalSupply -= amount_;
-        uint256 adjustedAmount = amount_.div(cumulativeAdjustmentFactor);
+        uint256 adjustedAmount = amount_.mul(cumulativeAdjustmentFactor);
         if (_burnProtectedAccounts.contains(account_)) {
             _balances[account_] -= amount_;
         } else {
