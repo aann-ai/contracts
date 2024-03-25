@@ -19,7 +19,8 @@ contract ANTokenMultichain is IERC20Metadata, IWormholeReceiver, AccessControl {
     uint256 public constant MAXIMUM_BURN_PERCENTAGE = 400;
 
     IWormholeRelayer public immutable wormholeRelayer;
-    uint256 public gasLimit = MINIMUM_GAS_LIMIT;
+    
+    uint256 public gasLimit = 150_000;
     uint256 public cumulativeAdjustmentFactor = PRBMathUD60x18.fromUint(1);
     uint256 public lastBurnTimestamp;
     uint256 private _totalSupply;
@@ -98,7 +99,7 @@ contract ANTokenMultichain is IERC20Metadata, IWormholeReceiver, AccessControl {
     }
 
     function updateGasLimit(uint256 gasLimit_) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        if (gasLimit < MINIMUM_GAS_LIMIT && gasLimit > MAXIMUM_GAS_LIMIT) {
+        if (gasLimit < MINIMUM_GAS_LIMIT || gasLimit > MAXIMUM_GAS_LIMIT) {
             revert InvalidGasLimit();
         }
         gasLimit = gasLimit_;

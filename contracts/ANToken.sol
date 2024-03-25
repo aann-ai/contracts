@@ -18,15 +18,16 @@ contract ANToken is IERC20Metadata, IWormholeReceiver, AccessControl {
     uint256 public constant MINIMUM_GAS_LIMIT = 100_000;
     uint256 public constant BASE_PERCENTAGE = 10_000;
     uint256 public constant MAXIMUM_BURN_PERCENTAGE = 400;
+    uint256 public constant PURCHASE_PROTECTION_PERIOD = 3 minutes;
+    uint256 public constant SALE_PROTECTION_PERIOD = 60 minutes;
+    uint256 public constant LIMIT_DURING_PURCHASE_PROTECTION_PERIOD = 500_000 ether;
     bytes32 public constant LIQUIDITY_PROVIDER_ROLE = keccak256("LIQUIDITY_PROVIDER_ROLE");
 
     IWormholeRelayer public immutable wormholeRelayer;
-    uint256 public gasLimit = MINIMUM_GAS_LIMIT;
-    uint256 public purchaseProtectionPeriod = 3 minutes;
-    uint256 public saleProtectionPeriod = 60 minutes;
-    uint256 public maximumPurchaseAmountDuringProtectionPeriod = 500_000 ether;
+
+    uint256 public gasLimit = 150_000;
     uint256 public cumulativeAdjustmentFactor = PRBMathUD60x18.fromUint(1);
-    uint256 public tradingEnabledTimestamp;
+    uint256 public tradingEnableTimestamp;
     uint256 public lastBurnTimestamp;
     uint256 private _totalSupply;
     string private _name;
@@ -64,7 +65,7 @@ contract ANToken is IERC20Metadata, IWormholeReceiver, AccessControl {
     error ForbiddenToTransferTokens(address from, address to, uint256 amount);
     error ForbiddenToSaleTokens();
 
-    event TradingEnabled(uint256 indexed tradingEnabledTimestamp);
+    event TradingEnabled(uint256 indexed tradingEnableTimestamp);
     event LiquidityPoolsAdded(address[] indexed liquidityPools);
     event LiquidityPoolsRemoved(address[] indexed liquidityPools);
     event SourceAddressesUpdated(uint16[] chainIds, address[] sourceAddresses);
@@ -93,7 +94,7 @@ contract ANToken is IERC20Metadata, IWormholeReceiver, AccessControl {
             revert ForbiddenToEnableTrading();
         }
         isTradingEnabled = true;
-        tradingEnabledTimestamp = block.timestamp;
+        tradingEnableTimestamp = block.timestamp;
         lastBurnTimestamp = block.timestamp;
         emit TradingEnabled(block.timestamp);
     }
@@ -175,7 +176,7 @@ contract ANToken is IERC20Metadata, IWormholeReceiver, AccessControl {
     }
 
     function updateGasLimit(uint256 gasLimit_) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        if (gasLimit < MINIMUM_GAS_LIMIT && gasLimit > MAXIMUM_GAS_LIMIT) {
+        if (gasLimit < MINIMUM_GAS_LIMIT || gasLimit > MAXIMUM_GAS_LIMIT) {
             revert InvalidGasLimit();
         }
         gasLimit = gasLimit_;
@@ -217,10 +218,8 @@ contract ANToken is IERC20Metadata, IWormholeReceiver, AccessControl {
         if (target == address(0) || target != targetAddress_) {
             revert InvalidTargetAddress();
         }
-        if (!isTradingEnabled) {
-            if (_hasLimits(msg.sender, to_)) {
-                revert ForbiddenToTransferTokens(msg.sender, to_, amount_);
-            }
+        if (!isTradingEnabled && _hasLimits(msg.sender, to_)) {
+            revert ForbiddenToTransferTokens(msg.sender, to_, amount_);
         }
         _burn(msg.sender, amount_);
         wormholeRelayer.sendPayloadToEvm{value: cost}(
@@ -261,10 +260,8 @@ contract ANToken is IERC20Metadata, IWormholeReceiver, AccessControl {
         if (target == address(0) || target != targetAddress_) {
             revert InvalidTargetAddress();
         }
-        if (!isTradingEnabled) {
-            if (_hasLimits(from_, to_)) {
-                revert ForbiddenToTransferTokens(from_, to_, amount_);
-            }
+        if (!isTradingEnabled && _hasLimits(msg.sender, to_)) {
+            revert ForbiddenToTransferTokens(msg.sender, to_, amount_);
         }
         _allowances[from_][msg.sender] -= amount_;
         _burn(from_, amount_);
@@ -378,17 +375,17 @@ contract ANToken is IERC20Metadata, IWormholeReceiver, AccessControl {
                 revert ForbiddenToTransferTokens(from_, to_, amount_);
             }
         } else {
-            uint256 timeElapsed = block.timestamp - tradingEnabledTimestamp;
-            if (timeElapsed < purchaseProtectionPeriod && _liquidityPools.contains(from_)) {
+            uint256 timeElapsed = block.timestamp - tradingEnableTimestamp;
+            if (timeElapsed < PURCHASE_PROTECTION_PERIOD && _liquidityPools.contains(from_)) {
                 if (!isPurchaseMadeDuringProtectionPeriodByAccount[tx.origin]) {
                     availableAmountToPurchaseDuringProtectionPeriodByAccount[tx.origin] 
-                        = maximumPurchaseAmountDuringProtectionPeriod - amount_;
+                        = LIMIT_DURING_PURCHASE_PROTECTION_PERIOD - amount_;
                     isPurchaseMadeDuringProtectionPeriodByAccount[tx.origin] = true;
                 } else {
                     availableAmountToPurchaseDuringProtectionPeriodByAccount[tx.origin] -= amount_;
                 }
             }
-            if (timeElapsed < saleProtectionPeriod && _liquidityPools.contains(to_)) {
+            if (timeElapsed < SALE_PROTECTION_PERIOD && _liquidityPools.contains(to_)) {
                 revert ForbiddenToSaleTokens();
             }
         }
