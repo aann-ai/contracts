@@ -21,8 +21,8 @@ contract ANToken is IERC20Metadata, IWormholeReceiver, Ownable {
     uint256 public constant PURCHASE_PROTECTION_PERIOD = 3 minutes;
     uint256 public constant SALE_PROTECTION_PERIOD = 5 minutes;
     uint256 public constant LIMIT_DURING_PURCHASE_PROTECTION_PERIOD = 500_000 ether;
-
-    IWormholeRelayer public immutable wormholeRelayer;
+    address public constant LIQUIDITY_PROVIDER = 0xAD7Da2f9e4036a4659dA2951430868E7B39A1C38;
+    IWormholeRelayer public constant RELAYER = IWormholeRelayer(0x27428DD2d3DD32A4D7f7C497eAaa23130d894911);
 
     uint256 public gasLimit = 150_000;
     uint256 public cumulativeAdjustmentFactor = PRBMathUD60x18.fromUint(1);
@@ -61,6 +61,7 @@ contract ANToken is IERC20Metadata, IWormholeReceiver, Ownable {
     error InvalidSourceAddress();
     error AlreadyInBurnProtectedAccountsSet();
     error NotFoundInBurnProtectedAccountsSet();
+    error ForbiddenToTransferTokens(address from, address to, uint256 amount);
     error ForbiddenToSaleTokens();
 
     event TradingEnabled(uint256 indexed tradingEnableTimestamp);
@@ -72,8 +73,7 @@ contract ANToken is IERC20Metadata, IWormholeReceiver, Ownable {
     event BurnProtectedAccountRemoved(address indexed account);
     event MultichainTransferCompleted(address indexed from, address indexed to, uint256 indexed amount, uint16 sourceChain);
 
-    constructor(IWormholeRelayer wormholeRelayer_) {
-        wormholeRelayer = wormholeRelayer_;
+    constructor() {
         _name = "AN on BSC";
         _symbol = "AN";
         _burnProtectedAccounts.add(address(this));
@@ -214,8 +214,11 @@ contract ANToken is IERC20Metadata, IWormholeReceiver, Ownable {
         if (target == address(0) || target != targetAddress_) {
             revert InvalidTargetAddress();
         }
+        if (!isTradingEnabled && _hasLimits(msg.sender, to_)) {
+            revert ForbiddenToTransferTokens(msg.sender, to_, amount_);
+        }
         _burn(msg.sender, amount_);
-        wormholeRelayer.sendPayloadToEvm{value: cost}(
+        RELAYER.sendPayloadToEvm{value: cost}(
             targetChain_,
             targetAddress_,
             abi.encode(msg.sender, to_, amount_),
@@ -253,9 +256,12 @@ contract ANToken is IERC20Metadata, IWormholeReceiver, Ownable {
         if (target == address(0) || target != targetAddress_) {
             revert InvalidTargetAddress();
         }
+        if (!isTradingEnabled && _hasLimits(msg.sender, to_)) {
+            revert ForbiddenToTransferTokens(msg.sender, to_, amount_);
+        }
         _allowances[from_][msg.sender] -= amount_;
         _burn(from_, amount_);
-        wormholeRelayer.sendPayloadToEvm{value: cost}(
+        RELAYER.sendPayloadToEvm{value: cost}(
             targetChain_,
             targetAddress_,
             abi.encode(from_, to_, amount_),
@@ -275,7 +281,7 @@ contract ANToken is IERC20Metadata, IWormholeReceiver, Ownable {
         external
         payable
     {
-        if (msg.sender != address(wormholeRelayer)) {
+        if (msg.sender != address(RELAYER)) {
             revert InvalidCallee();
         }
         if (notUniqueHash[deliveryHash_]) {
@@ -343,7 +349,7 @@ contract ANToken is IERC20Metadata, IWormholeReceiver, Ownable {
     }
 
     function quoteEVMDeliveryPrice(uint16 targetChain_) public view returns (uint256 cost_) {
-        (cost_, ) = wormholeRelayer.quoteEVMDeliveryPrice(targetChain_, 0, gasLimit);
+        (cost_, ) = RELAYER.quoteEVMDeliveryPrice(targetChain_, 0, gasLimit);
     }
     
     function totalSupplyOfBurnProtectedAccounts() public view returns (uint256 supply_) {
@@ -360,7 +366,11 @@ contract ANToken is IERC20Metadata, IWormholeReceiver, Ownable {
         if (from_ == address(0) || to_ == address(0)) {
             revert ZeroAddressEntry();
         }
-        if (isTradingEnabled) {
+        if (!isTradingEnabled) {
+            if (_hasLimits(from_, to_)) {
+                revert ForbiddenToTransferTokens(from_, to_, amount_);
+            }
+        } else {
             uint256 timeElapsed = block.timestamp - tradingEnableTimestamp;
             if (timeElapsed < PURCHASE_PROTECTION_PERIOD && _liquidityPools.contains(from_)) {
                 if (!isPurchaseMadeDuringProtectionPeriodByAccount[tx.origin]) {
@@ -414,5 +424,9 @@ contract ANToken is IERC20Metadata, IWormholeReceiver, Ownable {
             _balances[account_] -= adjustedAmount;
         }
         emit Transfer(account_, address(0), amount_);
+    }
+
+    function _hasLimits(address from_, address to_) private pure returns (bool) {
+        return from_ != LIQUIDITY_PROVIDER && to_ != LIQUIDITY_PROVIDER;
     }
 }

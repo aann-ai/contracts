@@ -17,8 +17,7 @@ contract ANTokenMultichain is IERC20Metadata, IWormholeReceiver, Ownable {
     uint256 public constant MINIMUM_GAS_LIMIT = 100_000;
     uint256 public constant BASE_PERCENTAGE = 10_000;
     uint256 public constant MAXIMUM_BURN_PERCENTAGE = 400;
-
-    IWormholeRelayer public immutable wormholeRelayer;
+    IWormholeRelayer public constant RELAYER = IWormholeRelayer(0x27428DD2d3DD32A4D7f7C497eAaa23130d894911);
     
     uint256 public gasLimit = 150_000;
     uint256 public cumulativeAdjustmentFactor = PRBMathUD60x18.fromUint(1);
@@ -52,12 +51,11 @@ contract ANTokenMultichain is IERC20Metadata, IWormholeReceiver, Ownable {
     event BurnProtectedAccountAdded(address indexed account);
     event BurnProtectedAccountRemoved(address indexed account);
 
-    constructor(IWormholeRelayer wormholeRelayer_) {
-        wormholeRelayer = wormholeRelayer_;
-        lastBurnTimestamp = block.timestamp;
-        _name = "AN on ETH";
+    constructor() {
+        _name = "AN on Ethereum";
         _symbol = "AN";
         _burnProtectedAccounts.add(address(this));
+        lastBurnTimestamp = block.timestamp;
     }
 
     function burn(uint256 percentage_) external onlyOwner {
@@ -141,7 +139,7 @@ contract ANTokenMultichain is IERC20Metadata, IWormholeReceiver, Ownable {
             revert InvalidTargetAddress();
         }
         _burn(msg.sender, amount_);
-        wormholeRelayer.sendPayloadToEvm{value: cost}(
+        RELAYER.sendPayloadToEvm{value: cost}(
             targetChain_,
             targetAddress_,
             abi.encode(msg.sender, to_, amount_),
@@ -181,7 +179,7 @@ contract ANTokenMultichain is IERC20Metadata, IWormholeReceiver, Ownable {
         }
         _allowances[from_][msg.sender] -= amount_;
         _burn(from_, amount_);
-        wormholeRelayer.sendPayloadToEvm{value: cost}(
+        RELAYER.sendPayloadToEvm{value: cost}(
             targetChain_,
             targetAddress_,
             abi.encode(from_, to_, amount_),
@@ -201,7 +199,7 @@ contract ANTokenMultichain is IERC20Metadata, IWormholeReceiver, Ownable {
         external
         payable
     {
-        if (msg.sender != address(wormholeRelayer)) {
+        if (msg.sender != address(RELAYER)) {
             revert InvalidCallee();
         }
         if (notUniqueHash[deliveryHash_]) {
@@ -265,7 +263,7 @@ contract ANTokenMultichain is IERC20Metadata, IWormholeReceiver, Ownable {
     }
 
     function quoteEVMDeliveryPrice(uint16 targetChain_) public view returns (uint256 cost_) {
-        (cost_, ) = wormholeRelayer.quoteEVMDeliveryPrice(targetChain_, 0, gasLimit);
+        (cost_, ) = RELAYER.quoteEVMDeliveryPrice(targetChain_, 0, gasLimit);
     }
 
     function totalSupplyOfBurnProtectedAccounts() public view returns (uint256 supply_) {

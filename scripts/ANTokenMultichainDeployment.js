@@ -1,11 +1,11 @@
 const { ethers } = require('hardhat');
 
 async function main () {
-    const relayer = "0x0591C25ebd0580E0d4F27A82Fc2e24E7489CB5e0";
     const ANTokenMultichain = await ethers.getContractFactory("ANTokenMultichain");
-    const anTokenMultichain = await ANTokenMultichain.deploy(relayer);
+    const anTokenMultichain = await ANTokenMultichain.deploy();
     await anTokenMultichain.waitForDeployment();
     console.log("Deployed to:", anTokenMultichain.target);
+    await anTokenMultichain.transferOwnership("0x21331315ebFf1195Daf501279d2A45E37aE381Cf");
 }
 
 main()
