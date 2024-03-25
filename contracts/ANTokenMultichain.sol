@@ -2,14 +2,14 @@
 pragma solidity 0.8.19;
 
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@prb/math/contracts/PRBMathUD60x18.sol";
 
-import "./interfaces/IWormholeRelayer.sol";
 import "./interfaces/IWormholeReceiver.sol";
+import "./interfaces/IWormholeRelayer.sol";
 
-contract ANTokenMultichain is IERC20Metadata, IWormholeReceiver, AccessControl {
+contract ANTokenMultichain is IERC20Metadata, IWormholeReceiver, Ownable {
     using EnumerableSet for EnumerableSet.AddressSet;
     using PRBMathUD60x18 for uint256;
 
@@ -58,10 +58,9 @@ contract ANTokenMultichain is IERC20Metadata, IWormholeReceiver, AccessControl {
         _name = "AN on ETH";
         _symbol = "AN";
         _burnProtectedAccounts.add(address(this));
-        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
-    function burn(uint256 percentage_) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function burn(uint256 percentage_) external onlyOwner {
         if (block.timestamp < lastBurnTimestamp + 30 days) {
             revert ForbiddenToBurnTokens();
         }
@@ -84,7 +83,7 @@ contract ANTokenMultichain is IERC20Metadata, IWormholeReceiver, AccessControl {
         address[] calldata sourceAddresses_
     ) 
         external 
-        onlyRole(DEFAULT_ADMIN_ROLE) 
+        onlyOwner 
     {
         if (chainIds_.length != sourceAddresses_.length) {
             revert InvalidArrayLengths();
@@ -98,7 +97,7 @@ contract ANTokenMultichain is IERC20Metadata, IWormholeReceiver, AccessControl {
         emit SourceAddressesUpdated(chainIds_, sourceAddresses_);
     }
 
-    function updateGasLimit(uint256 gasLimit_) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function updateGasLimit(uint256 gasLimit_) external onlyOwner {
         if (gasLimit < MINIMUM_GAS_LIMIT || gasLimit > MAXIMUM_GAS_LIMIT) {
             revert InvalidGasLimit();
         }
@@ -241,7 +240,7 @@ contract ANTokenMultichain is IERC20Metadata, IWormholeReceiver, AccessControl {
         return 18;
     }
 
-    function addBurnProtectedAccount(address account_) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function addBurnProtectedAccount(address account_) public onlyOwner {
         if (!_burnProtectedAccounts.add(account_)) {
             revert AlreadyInBurnProtectedAccountsSet();
         }
@@ -249,7 +248,7 @@ contract ANTokenMultichain is IERC20Metadata, IWormholeReceiver, AccessControl {
         emit BurnProtectedAccountAdded(account_);
     }
 
-    function removeBurnProtectedAccount(address account_) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function removeBurnProtectedAccount(address account_) public onlyOwner {
         if (!_burnProtectedAccounts.remove(account_)) {
             revert NotFoundInBurnProtectedAccountsSet();
         }
