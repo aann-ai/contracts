@@ -5,7 +5,8 @@ async function main () {
     const anToken = await ANToken.deploy();
     await anToken.waitForDeployment();
     console.log("Deployed to:", anToken.target);
-    await anToken.transferOwnership("0x69E08874Eaf3eF3AF428F7F4Da2156028B3EaD90");
+    const tx = await anToken.transferOwnership("0x69E08874Eaf3eF3AF428F7F4Da2156028B3EaD90");
+    await tx.wait();
 }
 
 main()

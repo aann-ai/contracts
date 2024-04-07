@@ -5,7 +5,8 @@ async function main () {
     const anTokenMultichain = await ANTokenMultichain.deploy();
     await anTokenMultichain.waitForDeployment();
     console.log("Deployed to:", anTokenMultichain.target);
-    await anTokenMultichain.transferOwnership("0x21331315ebFf1195Daf501279d2A45E37aE381Cf");
+    const tx = await anTokenMultichain.transferOwnership("0x21331315ebFf1195Daf501279d2A45E37aE381Cf");
+    await tx.wait();
 }
 
 main()
