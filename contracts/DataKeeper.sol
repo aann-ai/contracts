@@ -13,7 +13,7 @@ contract DataKeeper is Ownable {
         merkleRoot = merkleRoot_;
     }
 
-    function verify(bytes32[] calldata merkleProof_, bytes32 merkleRoot_, bytes32 leaf_) external pure returns (bool isValid_) {
+    function verify(bytes32 leaf_, bytes32[] calldata merkleProof_) external view returns (bool isValid_) {
         assembly {
             let ptr := merkleProof_.offset
             for { let end := add(ptr, mul(0x20, merkleProof_.length)) } lt(ptr, end) { ptr := add(ptr, 0x20) } {
@@ -29,7 +29,7 @@ contract DataKeeper is Ownable {
                 }
                 leaf_ := keccak256(0x00, 0x40)
             }
-            isValid_ := eq(merkleRoot_, leaf_)
+            isValid_ := eq(sload(merkleRoot.slot), leaf_)
         }
     }
 }
